@@ -10,7 +10,7 @@ import torch
 import numpy as np
 
 BUFFER_SIZE = 100000
-EPSILON = 0
+EPSILON = 1
 NUM_EPISODES = 0
 BATCH_SIZE=64
 REVIEW_FREQUENCY = 1000
@@ -24,7 +24,7 @@ def plot_training_results(q_history, score_history):
     ax1.set_xlabel('Episodes (x10)')
     ax1.set_ylabel('Average Q Value', color=color)
     ax1.plot(q_history, color=color, linewidth=2, label='Avg Q')
-    ax1.tick_params(axis=y, labelcolor=color)
+    ax1.tick_params(axis='y', labelcolor=color)
 
     # --- Plot Scores (Right Axis) ---
     ax2 = ax1.twinx() 
@@ -59,7 +59,7 @@ def main():
     avgQ_history = []
     avg_score_history = []
 
-    epsilon = 1
+    epsilon = EPSILON
     episode = 0
 
     while True:
