@@ -49,7 +49,7 @@ class BuildState(gym.Wrapper):
         for _ in range(self.k):
             observation, reward, terminated, truncated, info = self.env.step(action)
             tottal_reward += reward
-            #if game ends this is the last fram. dont want to mix new game with old
+            #if game ends this is the last frame. dont want to mix new game with old
             if terminated or truncated:
                 break
 

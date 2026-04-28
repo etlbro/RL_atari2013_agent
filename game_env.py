@@ -5,7 +5,8 @@ import ale_py
 
 gym.register_envs(ale_py)
 
-env = gym.make("VideoPinballNoFrameskip-v4", render_mode="human")
+#env = gym.make("VideoPinballNoFrameskip-v4", render_mode="human")
+env = gym.make("BoxingNoFrameskip-v4", render_mode="human")
 
 episode = 0
 while True:
