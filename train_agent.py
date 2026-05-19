@@ -49,8 +49,10 @@ def main():
     basic_env = gym.make("BreakoutNoFrameskip-v4")
     # "VideoPinballNoFrameskip-v4"  , render_mode="human"
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     env = BuildState(basic_env,k=4)
-    agent = DNQAgent(actions=4)
+    agent = DNQAgent(device=device, actions=4)
     buffer = Replay_buffer(cap=BUFFER_SIZE)
 
     #evaluation vars-

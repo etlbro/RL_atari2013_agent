@@ -31,25 +31,28 @@ class DNQ(nn.Module):
 
 
 class DNQAgent:
-    def __init__(self, actions=9, gamma=0.9):
+    def __init__(self,  device, actions=9, gamma=0.9):
         
         #setup DNQ
-        self.DNQ = DNQ(actions)
+        self.device = device
+        self.DNQ = DNQ(actions).to(self.device)
         self.loss_fn = torch.nn.MSELoss()
-        self.optimizer= opt.RMSprop(self.DNQ.parameters(), lr=0.000001) #well play with the lr later
+        self.optimizer= opt.RMSprop(self.DNQ.parameters(), lr=0.0001) #well play with the lr later
         self.gamma = gamma
 
 
     # infrence time, finds best action 
     def select_action(self, frame):
-        
+        state_tensor = torch.from_numpy(np.array(frame)).float().unsqueeze(0).to(self.device)
+        self.DNQ.eval()
         with torch.no_grad():
             # need to add 'unsqueeze' for cnn to work, adds a dim in satart for batch size
-            state_tensor=  torch.tensor(frame, dtype=torch.float32).unsqueeze(0)
             q_values = self.DNQ(state_tensor)
-            #pick the acton with highst score
-            best_action = q_values.argmax().item()
-            return best_action
+        self.DNQ.train()
+
+        #pick the acton with highst score
+        best_action = q_values.argmax().detach().cpu().item()
+        return best_action
 
 
     '''
@@ -62,15 +65,15 @@ class DNQAgent:
         
         states, actions, rewards, next_states, dones = zip(*batch)
         #convert to tensors
-        states_t = torch.tensor(np.array(states), dtype=torch.float32)
-        actions_t = torch.tensor(actions, dtype=torch.int64).unsqueeze(1) 
-        rewards_t = torch.tensor(rewards, dtype=torch.float32) 
+        states_t = torch.tensor(np.array(states), dtype=torch.float32).to(self.device)
+        actions_t = torch.tensor(actions, dtype=torch.int64).unsqueeze(1).to(self.device)
+        rewards_t = torch.tensor(rewards, dtype=torch.float32).to(self.device)
 
         # bounding transformation [-1.0, 1.0] 
-        rewards_t = torch.clamp(rewards_t, min=-1.0, max=1.0)
+        rewards_t = torch.clamp(rewards_t, min=-1.0, max=1.0).to(self.device)
 
-        next_states_t = torch.tensor(np.array(next_states), dtype=torch.float32)
-        dones_t = torch.tensor(dones, dtype=torch.float32)
+        next_states_t = torch.tensor(np.array(next_states), dtype=torch.float32).to(self.device)
+        dones_t = torch.tensor(dones, dtype=torch.float32).to(self.device)
 
        # set up the Qs+1 values for bellmon, meaning how much we'd make from next_state
         with torch.no_grad():
@@ -85,7 +88,7 @@ class DNQAgent:
         #pick the matching action to what was done, set as 
         q_values = self.DNQ(states_t)
 
-        current_q_values = q_values.gather(1, actions_t).squeeze()
+        current_q_values = q_values.gather(1, actions_t).squeeze(1)
 
         loss = self.loss_fn(current_q_values, expected_q_values)
 
