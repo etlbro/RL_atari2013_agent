@@ -1,6 +1,6 @@
-from DNQ_agent import DNQAgent
-from replay_buffer import Replay_buffer
-from build_state import BuildState
+from py_version.DNQ_agent import DNQAgent
+from py_version.replay_buffer import Replay_buffer
+from py_version.build_state import BuildState
 
 import matplotlib.pyplot as plt
 import gymnasium as gym
