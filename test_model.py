@@ -12,30 +12,40 @@ import time
 
 gym.register_envs(ale_py)
 
-#env = gym.make("VideoPinballNoFrameskip-v4", render_mode="human")
-basic_env = gym.make("BreakoutNoFrameskip-v4", render_mode="human") 
-
+basic_env = gym.make("AmidarNoFrameskip-v4",  render_mode="human") 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-env = BuildState(basic_env, k=4)
+# FIX 2: Ensure 'k' matches exactly what you used during training!
+env = BuildState(basic_env, k=4) 
 
+# FIX 3: Turn off the training wrapper's fake termination
+original_training_mode = getattr(env, 'training', True)
+env.training = False
 
-agent = DNQAgent(device=device, actions=4)
+num_actions = env.action_space.n
+agent = DNQAgent(device=device, actions=num_actions)
 
-agent.DNQ.load_state_dict(torch.load('dqn_breakout.pth', map_location=device, weights_only=True))
+agent.DNQ.load_state_dict(torch.load('Amidar_v3.pth', map_location=device, weights_only=True))
 agent.DNQ.eval()
-print("weights loaded")  
+print("Weights loaded successfully!")  
 
-
-frame,_ = env.reset()
-frame,_, _ , _, _ = env.step(1)
+frame, _ = env.reset()
+frame, _, _, _, _ = env.step(1)
 
 terminated = False
 truncated = False
-# here agent playes the game:
+
+# FIX 1: Set up the score tracker
+total_score = 0 
+
+print("Starting game...")
+
+# Here agent plays the game:
 while not (truncated or terminated):
-    time.sleep(0.016)
+    time.sleep(0.01) # ~60 FPS
+    
     state_tensor = torch.from_numpy(np.array(frame)).float().unsqueeze(0).to(device) / 255.0
+    
     with torch.no_grad():
         q_values = agent.DNQ(state_tensor)
         
@@ -46,21 +56,13 @@ while not (truncated or terminated):
             best_action = q_values.argmax().detach().cpu().item()
     
     frame, reward, terminated, truncated, info = env.step(best_action)
+    
+    # Add to the total score
+    total_score += reward 
 
-#episode +=1
-#print("ep reward:", episode_reward)
-#if episode > 1:
-#    break
+print(f"\n--- GAME OVER ---")
+print(f"Final Score: {total_score}")
+
+# Clean up
+env.training = original_training_mode
 env.close()
-
-#observation,_ = env.reset()
-#action = env.action_space.sample()
-#observation, reward, terminated, truncated, _= env.step(action)
-
-
-
-
-
-
-
-
